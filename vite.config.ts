@@ -21,7 +21,13 @@ export default defineConfig({
                     base: null,
                     includeAbsolute: false,
                 },
-            },
+            }, 
         }),
+        server: {
+        hmr: {
+            host: 'vito-transpiratory-marissa.ngrok-free.dev',
+            protocol: 'wss', // Penting untuk HTTPS ngrok
+        }
+    }
     ],
 });

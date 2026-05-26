@@ -10,6 +10,7 @@ use App\Models\Payment\Payment;
 use App\Services\MidtransService;
 use App\Services\VodaService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Triyatna\Digiflazz\Digiflazz;
 
 class HandleMidtransCallbackAction

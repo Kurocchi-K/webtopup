@@ -7,5 +7,5 @@ use Illuminate\Support\Facades\Route;
 // Callback URL for Midtrans
 Route::post('/midtrans/callback', [MidtransController::class, 'callback'])->name('midtrans.callback');
 
-// Callback URL for Digiflazz
+// Callback URL for Digiflazz (Webhook)
 Route::post('/digiflazz/callback', [DigiflazzController::class, 'callback'])->name('digiflazz.callback');

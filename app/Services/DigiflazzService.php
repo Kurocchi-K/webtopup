@@ -21,11 +21,11 @@ class DigiflazzService
         try {
             // Force to refresh balance
             if ($refresh) {
-                Cache::forget($this->prefixCacheKey.'balance');
+                Cache::forget($this->prefixCacheKey . 'balance');
             }
 
             // 60 to 120 seconds cache
-            $balance = Cache::flexible(key: $this->prefixCacheKey.'balance', ttl: [
+            $balance = Cache::flexible(key: $this->prefixCacheKey . 'balance', ttl: [
                 60,
                 120,
             ], callback: function () {
@@ -40,7 +40,7 @@ class DigiflazzService
 
             return (int) $balance;
         } catch (\Exception $e) {
-            Log::error('DigiflazzService@getSaldo: '.$e->getMessage());
+            Log::error('DigiflazzService@getSaldo: ' . $e->getMessage());
 
             return 0;
         }
@@ -55,12 +55,12 @@ class DigiflazzService
      */
     public function getPrepaidProducts(?string $brand = null, ?string $category = null, bool $refresh = false)
     {
-        // Time to live for cache
-        $ttl = now()->addDay();
+        // Time to live for cache (7 hari untuk mengurangi API calls)
+        $ttl = now()->addDays(7);
 
         if ($refresh) {
             // Invalidate cache
-            $cacheKey = $this->prefixCacheKey.'prepaid_products';
+            $cacheKey = $this->prefixCacheKey . 'prepaid_products';
             if ($brand) {
                 $cacheKey .= ":brand:$brand";
             }
@@ -71,7 +71,7 @@ class DigiflazzService
         }
 
         // Cache key
-        $cacheKey = $this->prefixCacheKey.'prepaid_products';
+        $cacheKey = $this->prefixCacheKey . 'prepaid_products';
         if ($brand) {
             $cacheKey .= ":brand:$brand";
         }
@@ -89,7 +89,7 @@ class DigiflazzService
 
                 // Catch Error
                 if (! $response->isSuccess()) {
-                    throw new \Exception('Failed to fetch products from Digiflazz with brand '.$brand.' and category '.$category);
+                    throw new \Exception('Failed to fetch products from Digiflazz with brand ' . $brand . ' and category ' . $category);
                 }
 
                 return $response->data();
@@ -97,7 +97,7 @@ class DigiflazzService
 
             return $product;
         } catch (\Exception $e) {
-            Log::error('DigiflazzService@getPrepaidProducts: '.$e->getMessage());
+            Log::error('DigiflazzService@getPrepaidProducts: ' . $e->getMessage());
 
             return [];
         }

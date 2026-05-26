@@ -11,7 +11,10 @@ class BrandController extends Controller
 {
     public function show(PPOBBrand $brand): Response
     {
-        $brand->load(['products.media', 'category']);
+        $brand->load(['category']);
+        $brand->load(['products' => function ($query) {
+            $query->where('status', true)->with('media');
+        }]);
 
         $brand->image = $brand->getFirstMediaUrl('image');
         $brand->banner = $brand->getFirstMediaUrl('banner');
@@ -38,7 +41,7 @@ class BrandController extends Controller
                 'author' => $settingTitle,
                 'application_name' => $settingTitle,
                 'url' => route('product.show', $brand->slug),
-                'image' => $brand->image ?: (config('app.url').$settingFavicon),
+                'image' => $brand->image ?: (config('app.url') . $settingFavicon),
             ],
         ]);
     }

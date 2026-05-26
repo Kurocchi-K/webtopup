@@ -26,7 +26,7 @@ class PPOBProductController extends Controller
      */
     public function index(Request $request)
     {
-        Gate::authorize('view'.$this->resource);
+        Gate::authorize('view' . $this->resource);
 
         $order = $request?->order ?? 'desc';
         $orderBy = $request?->orderBy ?? 'created_at';
@@ -35,7 +35,7 @@ class PPOBProductController extends Controller
         $search = $request?->search ?? '';
 
         $model = $this->getDataWithFilter(
-            model: PPOBProduct::with('media', 'brand.category')->when($request->filter_category_id, function ($query) use ($request) {
+            model: PPOBProduct::where('status', true)->with('media', 'brand.category')->when($request->filter_category_id, function ($query) use ($request) {
                 $query->whereHas('brand', function ($q) use ($request) {
                     $q->where('p_p_o_b_category_id', $request->filter_category_id);
                 });
@@ -83,7 +83,7 @@ class PPOBProductController extends Controller
      */
     public function create()
     {
-        Gate::authorize('create'.$this->resource);
+        Gate::authorize('create' . $this->resource);
 
         return inertia('cms/ppob/ppob-product/Create', [
             'categories' => PPOBCategory::where('status', true)->get(),
@@ -95,7 +95,7 @@ class PPOBProductController extends Controller
      */
     public function store(StorePPOBProductRequest $request, StorePPOBProductAction $action)
     {
-        Gate::authorize('create'.$this->resource);
+        Gate::authorize('create' . $this->resource);
 
         $action->handle($request->validated());
 
@@ -115,7 +115,7 @@ class PPOBProductController extends Controller
      */
     public function edit(PPOBProduct $product)
     {
-        Gate::authorize('update'.$this->resource);
+        Gate::authorize('update' . $this->resource);
 
         $product->image = $product->getFirstMediaUrl('image');
 
@@ -130,7 +130,7 @@ class PPOBProductController extends Controller
      */
     public function update(UpdatePPOBProductRequest $request, PPOBProduct $product, UpdatePPOBProductAction $action)
     {
-        Gate::authorize('update'.$this->resource);
+        Gate::authorize('update' . $this->resource);
 
         $action->handle($product, $request->validated());
 
@@ -142,7 +142,7 @@ class PPOBProductController extends Controller
      */
     public function destroy(PPOBProduct $product, DeletePPOBProductAction $action)
     {
-        Gate::authorize('delete'.$this->resource);
+        Gate::authorize('delete' . $this->resource);
 
         $action->handle($product);
 
