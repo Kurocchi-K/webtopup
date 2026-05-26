@@ -1,6 +1,11 @@
+
 # Web PPOB
 
 Web PPOB terintegrasi Digiflazz dan Midtrans untuk memudahkan pengguna dalam melakukan pembelian produk digital seperti pulsa, paket data, token listrik, dan lain-lain. Aplikasi ini menyediakan berbagai fitur untuk mengelola produk, transaksi, dan pengguna dengan mudah melalui panel admin yang intuitif.
+
+## Demo
+
+[TopupWok](https://topup.karuhundeveloper.com)
 
 ![alt text](image.png)
 
@@ -41,7 +46,13 @@ composer install && npm install
 cp .env.example .env
 ```
 
-4. Setup midtrans, digiflazz and apigames api credential in .env file
+4. Storage link
+
+```bash
+php artisan storage:link
+```
+
+5. Setup midtrans, digiflazz and apigames api credential in .env file
 
 ```bash
 MIDTRANS_MERCHANT_ID=
@@ -62,19 +73,19 @@ Untuk memudahkan setup credential, gunakan link berikut:
 - Digiflazz: https://member.digiflazz.com/buyer-area
 - API Games: https://member.apigames.id/pengaturan/secret-key
 
-5. Generate application key
+6. Generate application key
 
 ```bash
 php artisan key:generate
 ```
 
-6. Run database migrations and seeders
+7. Run database migrations and seeders
 
 ```bash
 php artisan migrate --seed
 ```
 
-7. Start the development server
+8. Start the development server
 
 ```bash
 php artisan serve
