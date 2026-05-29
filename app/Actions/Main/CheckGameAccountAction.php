@@ -4,18 +4,15 @@ namespace App\Actions\Main;
 
 use App\Models\PPOB\PPOBBrand;
 use App\Models\PPOB\PPOBProduct;
-use App\Services\GameProService;
-use Illuminate\Support\Str;
+use App\Services\Interfaces\GameVerificationInterface; // Panggil Interface-nya!
 
 class CheckGameAccountAction
 {
+    // Menggunakan Interface (bukan GameProService)
     public function __construct(
-        protected GameProService $gameProService,
+        protected GameVerificationInterface $verificationService,
     ) {}
 
-    /**
-     * Handle the action.
-     */
     public function handle(array $data): array
     {
         $brandName = '';
@@ -28,16 +25,11 @@ class CheckGameAccountAction
             $brandName = $brand->name;
         }
 
-        // Currently only Mobile Legends is supported for check
-        if (! Str::contains(strtolower($brandName), 'mobile legend')) {
-            return [
-                'status' => false,
-                'message' => 'Game validation not supported for this product',
-            ];
-        }
+        // HAPUS blok IF "Mobile Legend" yang tadi
+        // Biarkan Service yang menentukan apakah game ini didukung atau tidak.
 
-        return $this->gameProService->resolveAccount(
-            game: 'mobilelegend',
+        return $this->verificationService->resolveAccount(
+            game: $brandName, // Kirim nama brand-nya, biar Service yang memetakan
             uid: $data['account_id'],
             server: $data['server_id'] ?? null,
         );

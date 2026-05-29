@@ -24,7 +24,7 @@ class SliderController extends Controller
      */
     public function index(Request $request)
     {
-        Gate::authorize('view'.$this->resource);
+        Gate::authorize('view' . $this->resource);
 
         $order = $request?->order ?? 'desc';
         $orderBy = $request?->orderBy ?? 'order';
@@ -33,7 +33,7 @@ class SliderController extends Controller
         $search = $request?->search ?? '';
 
         $model = $this->getDataWithFilter(
-            model: Slider::with('media'),
+            model: Slider::query()->with('media'),
             searchBy: [
                 'title',
                 'order',
@@ -47,7 +47,7 @@ class SliderController extends Controller
         );
 
         // Load media
-        $model->map(function ($item) {
+        $model->getcollection()->transform(function ($item) {
             $item->image = $item->getFirstMediaUrl('image');
 
             return $item;
@@ -69,7 +69,7 @@ class SliderController extends Controller
      */
     public function create()
     {
-        Gate::authorize('create'.$this->resource);
+        Gate::authorize('create' . $this->resource);
 
         return inertia('cms/web/slider/Create');
     }
@@ -79,7 +79,7 @@ class SliderController extends Controller
      */
     public function store(StoreSliderRequest $request, StoreSliderAction $action)
     {
-        Gate::authorize('create'.$this->resource);
+        Gate::authorize('create' . $this->resource);
 
         $action->handle($request->validated());
 
@@ -99,7 +99,7 @@ class SliderController extends Controller
      */
     public function edit(Slider $slider)
     {
-        Gate::authorize('update'.$this->resource);
+        Gate::authorize('update' . $this->resource);
 
         $slider->image = $slider->getFirstMediaUrl('image');
 
@@ -113,7 +113,7 @@ class SliderController extends Controller
      */
     public function update(UpdateSliderRequest $request, Slider $slider, UpdateSliderAction $action)
     {
-        Gate::authorize('update'.$this->resource);
+        Gate::authorize('update' . $this->resource);
 
         $action->handle($slider, $request->validated());
 
@@ -125,7 +125,7 @@ class SliderController extends Controller
      */
     public function destroy(Slider $slider, DeleteSliderAction $action)
     {
-        Gate::authorize('delete'.$this->resource);
+        Gate::authorize('delete' . $this->resource);
 
         $action->handle($slider);
 

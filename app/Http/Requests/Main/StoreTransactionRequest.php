@@ -3,66 +3,72 @@
 namespace App\Http\Requests\Main;
 
 use App\Models\PPOB\PPOBProduct;
-use App\Services\GameProService;
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Services\Interfaces\GameVerificationInterface;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class StoreTransactionRequest extends FormRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    protected function prepareForValidation(): void
     {
-        return [
-            'type' => 'nullable|in:id,id+server',
-            'account_id' => 'required_if:type,id',
-            'server_id' => 'required_if:type,id+server',
-            'product_id' => 'required|exists:p_p_o_b_products,id',
-            'email' => 'required|email|max:255',
-            'name' => 'required|string|max:255',
-            'phone' => 'required|numeric',
-            'payment_type' => 'required|in:automatic,manual',
-            'payment_method' => 'required|string|max:255', // in:qris,bca,bni,bri,mandiri,permata
-            'voucher_code' => 'nullable|string|exists:vouchers,code',
-        ];
+        // Bersihkan spasi di awal dan akhir
+        $accId = trim($this->account_id);
+        $serverId = trim($this->server_id);
+
+        // LOGIKA PARSING "APAPUN FORMATNYA":
+        // Kita coba cari pola angka(angka)
+        if (preg_match('/(\d+)\s*[\(\)]+\s*(\d+)/', $accId, $matches)) {
+            // Jika ketemu pola, pisahkan ID dan Server
+            $this->merge([
+                'account_id' => $matches[1],
+                'server_id'  => $serverId ?: $matches[2], // Jika server_id input kosong, ambil dari regex
+            ]);
+        } else {
+            // Jika tidak ketemu pola (user cuma masukin ID saja), tetap gunakan apa adanya
+            $this->merge([
+                'account_id' => $accId,
+                'server_id'  => $serverId,
+            ]);
+        }
+
+        \Log::info('Data Checkout Setelah Parsing:', [
+            'account_id' => $this->account_id,
+            'server_id'  => $this->server_id
+        ]);
     }
 
-    /**
-     * Handle a passed validation attempt.
-     */
     protected function passedValidation(): void
     {
         $product = PPOBProduct::find($this->product_id);
+        $verificationService = app(\App\Services\Interfaces\GameVerificationInterface::class);
 
-        // Pro Version
-        $gameProService = new GameProService;
-        // Check the brand if the brand is mobile legends, check the server and uid
+        // Cek apakah brand butuh verifikasi (Mobile Legends)
         if (Str::contains(strtolower($product->brand->name), 'mobile legend')) {
-            $resolve = $gameProService->resolveAccount(
+
+            $resolve = $verificationService->resolveAccount(
                 game: 'mobilelegend',
                 uid: $this->account_id,
                 server: $this->server_id,
             );
 
-            if (! $resolve['status']) {
+            // Jika API pusat bilang tidak ditemukan, baru lempar error
+            if (!($resolve['status'] ?? false)) {
+                \Log::error('Gagal Verifikasi saat Checkout:', $resolve);
                 throw ValidationException::withMessages([
-                    'account_id' => 'Game id or server is invalid',
+                    'account_id' => 'ID atau Server tidak valid (Silakan cek kembali)',
                 ]);
             }
         }
 
-        // Merge additional data
+        // Gabungkan data untuk Action
         $this->merge([
             'p_p_o_b_brand_id' => $product->p_p_o_b_brand_id,
             'p_p_o_b_product_id' => $product->id,
             'submited' => [
                 'account_id' => $this->account_id,
-                'server_id' => $this->server_id ?? null,
+                'server_id' => $this->server_id,
             ],
         ]);
     }

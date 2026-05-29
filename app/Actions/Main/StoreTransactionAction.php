@@ -13,12 +13,15 @@ use App\Services\VodaService;
 use App\Traits\WithGenerateReference;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Services\Interfaces\GameVerificationInterface; // Panggil Interface-nya!
 
 class StoreTransactionAction
 {
     use WithGenerateReference;
 
     public function __construct(
+        protected GameVerificationInterface $verificationService, // Inject Service kita
         public readonly MidtransService $midtransService,
         public readonly VodaService $vodaService,
     ) {}
@@ -28,14 +31,40 @@ class StoreTransactionAction
      */
     public function handle(array $data): Order
     {
+        // 1. Ambil nama produk untuk mendeteksi nama game
+        $product = PPOBProduct::find($data['product_id']);
+
+        // 2. Kunci! Hanya eksekusi API kalau nama brand mengandung 'mobile legend'
+        if (\Illuminate\Support\Str::contains(strtolower($product->brand->name), 'mobile legend')) {
+
+            \Log::info('DEBUG ACTION - Mengirim ke API (Khusus ML):', [
+                'uid' => $data['account_id'],
+                'server' => $data['server_id'] ?? ''
+            ]);
+
+            $verification = $this->verificationService->resolveAccount(
+                game: 'mobilelegend',
+                uid: $data['account_id'],
+                server: $data['server_id'] ?? ''
+            );
+
+            // Kalau gagal, batalkan
+            if (!$verification['status']) {
+                throw new \Exception("Gagal melakukan verifikasi akun: " . ($verification['message'] ?? 'Data tidak ditemukan'));
+            }
+        } else {
+            \Log::info('Game selain ML. Bypass verifikasi API.');
+        }
+
+        // --- PASTIKAN TIDAK ADA LAGI PENGECEKAN $verification DI BAWAH SINI ---
+
+        // 3. Langsung buat referensi transaksi
         $reference = $this->generateReference(
             model: new Order,
-            prefix: 'TRX-'.now()->format('Ymd').'-',
+            prefix: 'TRX-' . now()->format('Ymd') . '-',
         );
 
         // Get price from product
-        $product = PPOBProduct::find($data['product_id']);
-
         $data['reference'] = $reference['code'];
         $data['ref_number'] = $reference['number'];
         $data['amount'] = (int) $product->sell_price;
@@ -126,7 +155,7 @@ class StoreTransactionAction
         }
 
         // Create payment record
-        $orderId = uniqid().time();
+        $orderId = uniqid() . time();
         $payment = Payment::create([
             'driver' => $data['payment_type'] === 'automatic' ? 'midtrans' : 'manual',
             'payable_type' => Order::class,
@@ -158,7 +187,7 @@ class StoreTransactionAction
 
             // Throw an exception if Midtrans transaction creation failed
             if (! $midtrans['successful']) {
-                throw new \Exception('Failed to create Midtrans transaction: '.$midtrans['message']);
+                throw new \Exception('Failed to create Midtrans transaction: ' . $midtrans['message']);
             }
 
             // Update payment with Midtrans details

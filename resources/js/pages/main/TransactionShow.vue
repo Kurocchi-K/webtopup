@@ -5,12 +5,29 @@ import DeliveryProgressCard from '@/components/transaction/DeliveryProgressCard.
 import OrderDetails from '@/components/transaction/OrderDetails.vue';
 import PaymentInstructions from '@/components/transaction/PaymentInstructions.vue';
 import { OrderDataItem } from '@/types/cms/main';
-import { Head } from '@inertiajs/vue3';
+import { onMounted, onUnmounted } from 'vue';
+import { router, Head } from '@inertiajs/vue3'; // Tambahkan 'router' di sini
 
-defineProps<{
+const props = defineProps<{
     order: OrderDataItem;
     mlAccountNickname?: string;
 }>();
+
+// 3. Tambahkan fungsi auto-refresh
+let interval: any;
+
+onMounted(() => {
+    // Refresh otomatis setiap 5 detik HANYA JIKA order belum lunas
+    if (props.order.payment_status === 0) {
+        interval = setInterval(() => {
+            router.reload({ only: ['order'] });
+        }, 5000);
+    }
+});
+
+onUnmounted(() => {
+    clearInterval(interval);
+});
 </script>
 
 <template>

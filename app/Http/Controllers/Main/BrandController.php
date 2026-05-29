@@ -25,6 +25,9 @@ class BrandController extends Controller
             $product->makeHidden('media');
         });
 
+        $currencyProducts = $brand->products->where('type', 'currency')->values();
+        $membershipProducts = $brand->products->where('type', 'membership')->values();
+
         $brand->makeHidden('media');
 
         $settingTitle = getSetting('title');
